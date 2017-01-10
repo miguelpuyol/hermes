@@ -39,12 +39,17 @@ public enum ErrorCode {
     OAUTH_PROVIDER_ALREADY_EXISTS(BAD_REQUEST),
     SUPPORT_TEAMS_COULD_NOT_BE_LOADED(INTERNAL_SERVER_ERROR),
     TOPIC_BLACKLISTED(FORBIDDEN),
+    QUOTA_VIOLATION(429),
     TOPIC_NOT_UNBLACKLISTED(BAD_REQUEST);
 
     private final int httpCode;
 
     private ErrorCode(Response.Status httpCode) {
         this.httpCode = httpCode.getStatusCode();
+    }
+
+    private ErrorCode(int httpCode) {
+        this.httpCode = httpCode;
     }
 
     public int getHttpCode() {
