@@ -102,7 +102,10 @@ public enum Configs {
     FRONTEND_GRACEFUL_SHUTDOWN_INITIAL_WAIT_MS("frontend.graceful.shutdown.initial.wait.ms", 10000),
     FRONTEND_HTTP2_ENABLED("frontend.http2.enabled", false),
     FRONTEND_FORCE_TOPIC_MAX_MESSAGE_SIZE("frontend.force.topic.max.message.size", false),
-    FRONTEND_MAX_THROUGHPUT("frontend.throughput.max", Long.MAX_VALUE),
+    FRONTEND_THROUGHPUT_TYPE("frontend.throughput.type", "unlimited"),
+    FRONTEND_THROUGHPUT_MAX("frontend.throughput.max", Long.MAX_VALUE),
+    FRONTEND_THROUGHPUT_THRESHOLD("frontend.throughput.threshold", Long.MAX_VALUE),
+    FRONTEND_THROUGHPUT_DESIRED("frontend.throughput.desired", Long.MAX_VALUE),
 
     FRONTEND_SSL_ENABLED("frontend.ssl.enabled", false),
     FRONTEND_SSL_PORT("frontend.ssl.port", 8443),

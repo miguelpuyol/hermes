@@ -70,7 +70,7 @@ public class PublishingTest extends IntegrationTest {
     public void shouldReturn429ForQuotaViolation() {
         // given
         Topic topic = operations.buildTopic("publishAndConsumeGroup", "topic");
-        TestMessage message = TestMessage.of("content", StringUtils.repeat("X", 10000));
+        TestMessage message = TestMessage.of("content", StringUtils.repeat("X", 60_000));
 
         wait.until(() -> {
             // when

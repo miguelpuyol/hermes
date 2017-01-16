@@ -31,14 +31,14 @@ class MessageReadHandler implements HttpHandler {
     private final ThroughputLimiter throughputLimiter;
 
     MessageReadHandler(HttpHandler next, HttpHandler timeoutHandler, ConfigFactory configFactory,
-                       MessageErrorProcessor messageErrorProcessor) {
+                       MessageErrorProcessor messageErrorProcessor,  ThroughputLimiter throughputLimiter) {
         this.next = next;
         this.timeoutHandler = timeoutHandler;
         this.messageErrorProcessor = messageErrorProcessor;
         this.contentLengthChecker = new ContentLengthChecker(configFactory);
         this.defaultAsyncTimeout = configFactory.getIntProperty(Configs.FRONTEND_IDLE_TIMEOUT);
         this.longAsyncTimeout = configFactory.getIntProperty(Configs.FRONTEND_LONG_IDLE_TIMEOUT);
-        this.throughputLimiter = new ThroughputLimiter(configFactory.getLongProperty(Configs.FRONTEND_MAX_THROUGHPUT));
+        this.throughputLimiter = throughputLimiter;
     }
 
     @Override
@@ -54,7 +54,9 @@ class MessageReadHandler implements HttpHandler {
                         timeout,
                         MILLISECONDS)));
         try {
-            throughputLimiter.check(attachment.getCachedTopic());
+            throughputLimiter.check(
+                    attachment.getCachedTopic().getTopicName(),
+                    attachment.getCachedTopic().getThroughput());
             readMessage(exchange, attachment);
         } catch (ThroughputLimiter.QuotaViolationException ex) {
             respondWithQuotaViolation(exchange, attachment, ex);
@@ -137,7 +139,9 @@ class MessageReadHandler implements HttpHandler {
         try {
             contentLengthChecker.check(exchange, messageContent.length, attachment);
             attachment.getCachedTopic().reportMessageContentSize(messageContent.length);
-            throughputLimiter.check(attachment.getCachedTopic());
+            throughputLimiter.check(
+                    attachment.getCachedTopic().getTopicName(),
+                    attachment.getCachedTopic().getThroughput());
             attachment.setMessageContent(messageContent);
             endWithoutDefaultResponse(exchange);
             if (exchange.isInIoThread()) {
@@ -149,7 +153,7 @@ class MessageReadHandler implements HttpHandler {
             attachment.removeTimeout();
             messageErrorProcessor.sendAndLog(exchange, attachment.getTopic(),
                     attachment.getMessageId(), error(e.getMessage(), VALIDATION_ERROR));
-        } catch (ThroughputLimiter.QuotaViolationException e) {
+        } catch (FixedThroughputLimiter.QuotaViolationException e) {
             respondWithQuotaViolation(exchange, attachment, e);
         } catch (Exception e) {
             attachment.removeTimeout();
@@ -159,7 +163,7 @@ class MessageReadHandler implements HttpHandler {
 
     private void respondWithQuotaViolation(HttpServerExchange exchange,
                                            AttachmentContent attachment,
-                                           ThroughputLimiter.QuotaViolationException ex) {
+                                           FixedThroughputLimiter.QuotaViolationException ex) {
         attachment.removeTimeout();
         messageErrorProcessor.sendAndLog(
                 exchange,
